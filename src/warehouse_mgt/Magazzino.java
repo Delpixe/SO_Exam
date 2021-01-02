@@ -23,8 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Magazzino {
 
     /* Risorse */
-    private int cm_nastro_disponibili = 0;
-    private int numero_scatole_disponibili = 0;
+    private static int cm_nastro_disponibili = 0;
+    private static int scatole_disponibili = 0;
     /* end-Risorse */
 
     /* lock_mgt */
@@ -70,8 +70,11 @@ public class Magazzino {
     }
 
     //invocato dai fornitori
-    public static void depositaRisorse(){
-
+    public static void depositaRisorse(int cm_nastro,int nscatole){
+        cm_nastro_disponibili += cm_nastro;
+        scatole_disponibili += nscatole;
+        System.out.println("depositati " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
+        Log.writeLog("depositati " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
     }
 
     //lck and sem mgt
