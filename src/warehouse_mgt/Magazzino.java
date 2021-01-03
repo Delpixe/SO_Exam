@@ -36,15 +36,17 @@ public class Magazzino {
 
 
     /* Lista ordini */
-    private static final List<Integer> order_List = new ArrayList<>();
+    private static final List<Order> order_List = new ArrayList<>();
 
     //invocato dagli acquirenti
-    public static void effettuaOrdine(int num_pacchi){
+    public static void effettuaOrdine(Acquirente acquirente_ordine,int num_pacchi){
         Magazzino.accedi_magazzino();
-        order_List.add(num_pacchi);
+        Order ordine = new Order(acquirente_ordine,num_pacchi);
+        order_List.add(ordine);
         notEmpty.signal();
         Magazzino.rilascia_magazzino();
         Log.writeLog("Aggiunto ordine per " + num_pacchi + " pacchi");
+        System.out.println("Aggiunto ordine per " + num_pacchi + " pacchi");
     }
 
     //invocato dagli addetti_alle_spedizioni
@@ -63,13 +65,10 @@ public class Magazzino {
         try{
             while (order_List.isEmpty())
                 notEmpty.await();
-            Magazzino.accedi_magazzino();
 
-            Integer num_pacchi = order_List.get(0);
-            if (!HandlePacchi(num_pacchi)) {
-                System.out.println("non ci sono abbastanza pacchi");
-                Log.writeLog("non ci sono abbastanza pacchi");
-            }
+            Magazzino.accedi_magazzino();
+            Order ordine_da_gestire = order_List.get(0);
+            HandlePacchi(ordine_da_gestire);
             Magazzino.rilascia_magazzino();
         }catch (InterruptedException e){
             System.out.println("non ci sono ordini in lista");
@@ -77,18 +76,24 @@ public class Magazzino {
         }
     }
 
-    private static boolean HandlePacchi(Integer num_pacchi) {
-        if (((num_pacchi * 50) > (cm_nastro_disponibili)) || ((num_pacchi > scatole_disponibili)))
-                return false;
-
-        order_List.remove(0);
-        return true;
+    private static void HandlePacchi(Order ordine_da_gestire) {
+        int num_pacchi = ordine_da_gestire.getNum_pacchi_richiesti();
+        if (((num_pacchi * 50) > (cm_nastro_disponibili)) || ((num_pacchi > scatole_disponibili))) {
+            try {
+                notEmpty.await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        order_List.remove(ordine_da_gestire);
     }
 
     //invocato dai fornitori
     public static void depositaRisorse(int cm_nastro,int nscatole){
+        Magazzino.accedi_magazzino();
         cm_nastro_disponibili += cm_nastro;
         scatole_disponibili += nscatole;
+        Magazzino.rilascia_magazzino();
         System.out.println("depositati " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
         Log.writeLog("depositati " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
     }

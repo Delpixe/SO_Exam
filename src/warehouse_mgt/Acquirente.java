@@ -47,7 +47,7 @@ public class Acquirente extends Thread{
         Random rnd = new Random();
         int num_pacchi = rnd.nextInt(4)+1;
 
-        Magazzino.effettuaOrdine(num_pacchi);
+        Magazzino.effettuaOrdine(this,num_pacchi);
     }
 
     private void RandomlyWait() {

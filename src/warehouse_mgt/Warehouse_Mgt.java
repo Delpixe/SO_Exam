@@ -22,20 +22,19 @@ public class Warehouse_Mgt {
 /*
         Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime);
         fornitore.start();
-*/
+
+        //Instance the acquirenti
+        for (int i = 0; i < acquirenti.length ; i++)
+            acquirenti[i] = new Acquirente(i);
+        for (int i = 0; i < acquirenti.length ; i++)
+            acquirenti[i].start();
+
         //Instance the addetti
         for (int i = 0; i < addetti.length ; i++)
             addetti[i] = new Addetto_spedizioni(i);
         for (int i = 0; i < addetti.length ; i++)
             addetti[i].start();
 
-        /*
-        //Instance the acquirenti
-        for (int i = 0; i < acquirenti.length ; i++)
-            acquirenti[i] = new Acquirente(i);
-        for (int i = 0; i < acquirenti.length ; i++)
-            acquirenti[i].start();
-*/
         /* joins */
         try{
   //          for (int i = 0; i < acquirenti.length ; i++)

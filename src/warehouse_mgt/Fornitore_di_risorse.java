@@ -32,9 +32,7 @@ public class Fornitore_di_risorse extends Thread{
 
             if ((cm_nastro != 0) || (nscatole != 0))
             {
-                Magazzino.accedi_magazzino();
                 Magazzino.depositaRisorse(cm_nastro,nscatole);
-                Magazzino.rilascia_magazzino();
             }
         }catch(InterruptedException e){
             System.out.println(e.toString());
