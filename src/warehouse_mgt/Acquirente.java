@@ -5,10 +5,20 @@ import java.util.Random;
 public class Acquirente extends Thread{
 //singolo thread
     //tipologia acquirente = false -> standard = true -> prime
-    public boolean tipo_acquirente;
+    public boolean Prime;
 
-    public void Acquirente(){
-        tipo_acquirente = RandomlyAssign_TipoAcquirente();
+    public Acquirente(int num_Acquirente){
+        super("Acquirente_" + num_Acquirente);
+        Prime = RandomlyAssign_TipoAcquirente();
+
+        if (Prime) {
+            Log.writeLog("[" + getName() + "]" + " Creato Acquirente di tipo Prime");
+            System.out.println("[" + getName() + "]" + " Creato Acquirente di tipo Prime");
+        }
+        else{
+            Log.writeLog("[" + getName() + "]" + " Creato Acquirente di tipo Standard");
+            System.out.println("[" + getName() + "]" + " Creato Acquirente di tipo Standard");
+        }
     }
 
     private boolean RandomlyAssign_TipoAcquirente() {
@@ -37,9 +47,7 @@ public class Acquirente extends Thread{
         Random rnd = new Random();
         int num_pacchi = rnd.nextInt(4)+1;
 
-        Magazzino.accedi_magazzino();
         Magazzino.effettuaOrdine(num_pacchi);
-        Magazzino.rilascia_magazzino();
     }
 
     private void RandomlyWait() {
@@ -51,5 +59,10 @@ public class Acquirente extends Thread{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void run() {
+        Place_Orders();
     }
 }

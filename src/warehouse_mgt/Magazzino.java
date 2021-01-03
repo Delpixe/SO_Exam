@@ -18,6 +18,7 @@ package warehouse_mgt;
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Magazzino {
@@ -30,6 +31,7 @@ public class Magazzino {
     /* lock_mgt */
     private static final ReentrantLock lck = new ReentrantLock(true);
     private static final Semaphore sem = new Semaphore(1,true);//a guardia di lck
+    private static Condition notEmpty = lck.newCondition();
     /* end-lock_mgt */
 
 
@@ -38,7 +40,11 @@ public class Magazzino {
 
     //invocato dagli acquirenti
     public static void effettuaOrdine(int num_pacchi){
-
+        Magazzino.accedi_magazzino();
+        order_List.add(num_pacchi);
+        notEmpty.signal();
+        Magazzino.rilascia_magazzino();
+        Log.writeLog("Aggiunto ordine per " + num_pacchi + " pacchi");
     }
 
     //invocato dagli addetti_alle_spedizioni
@@ -53,20 +59,30 @@ public class Magazzino {
         pacco.
         · Se non trova risorse si sospende in attesa di queste.
          */
+
         try{
-            if (!order_List.isEmpty())
-            {
-                Integer num_pacchi = order_List.get(0);
-                HandlePacchi(num_pacchi);
+            while (order_List.isEmpty())
+                notEmpty.await();
+            Magazzino.accedi_magazzino();
+
+            Integer num_pacchi = order_List.get(0);
+            if (!HandlePacchi(num_pacchi)) {
+                System.out.println("non ci sono abbastanza pacchi");
+                Log.writeLog("non ci sono abbastanza pacchi");
             }
-        }catch (NullPointerException e){
+            Magazzino.rilascia_magazzino();
+        }catch (InterruptedException e){
             System.out.println("non ci sono ordini in lista");
             Log.writeLog("non ci sono ordini in lista");
         }
     }
 
-    private static void HandlePacchi(Integer num_pacchi) {
+    private static boolean HandlePacchi(Integer num_pacchi) {
+        if (((num_pacchi * 50) > (cm_nastro_disponibili)) || ((num_pacchi > scatole_disponibili)))
+                return false;
 
+        order_List.remove(0);
+        return true;
     }
 
     //invocato dai fornitori

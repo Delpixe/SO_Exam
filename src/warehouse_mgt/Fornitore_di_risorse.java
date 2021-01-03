@@ -26,15 +26,16 @@ public class Fornitore_di_risorse extends Thread{
         int cm_nastro = rnd.nextInt(5000);
         int nscatole = rnd.nextInt(100);
 
-        if ((cm_nastro != 0) || (nscatole != 0))
-        {
-            Magazzino.accedi_magazzino();
-            Magazzino.depositaRisorse(cm_nastro,nscatole);
-            Magazzino.rilascia_magazzino();
-        }
         try{
             if (fTime != 0)
                 sleep(fTime);
+
+            if ((cm_nastro != 0) || (nscatole != 0))
+            {
+                Magazzino.accedi_magazzino();
+                Magazzino.depositaRisorse(cm_nastro,nscatole);
+                Magazzino.rilascia_magazzino();
+            }
         }catch(InterruptedException e){
             System.out.println(e.toString());
             Log.writeLog(e.toString());

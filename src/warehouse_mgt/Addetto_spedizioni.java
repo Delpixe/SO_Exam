@@ -19,10 +19,13 @@ package warehouse_mgt;
 
 public class Addetto_spedizioni extends Thread{
 
+    public Addetto_spedizioni(int num_addetto)
+    {
+        super("Addetto_" + num_addetto);
+    }
+
     @Override
     public void run() {
-        Magazzino.accedi_magazzino();
         Magazzino.gestisciOrdine();
-        Magazzino.rilascia_magazzino();
     }
 }

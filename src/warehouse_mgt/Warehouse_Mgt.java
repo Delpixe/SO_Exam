@@ -1,6 +1,5 @@
 package warehouse_mgt;
 
-import java.util.List;
 import java.util.Random;
 
 public class Warehouse_Mgt {
@@ -12,43 +11,47 @@ public class Warehouse_Mgt {
         Random rnd = new Random();
         int nAddetti = rnd.nextInt(1000);
         int nAcquirenti = rnd.nextInt(1000);
-        int fTime = Math.abs(rnd.nextInt());
+        int fTime = Math.abs(rnd.nextInt(5000)); //messi 5 secondi per semplicità di testing
 
         welcome(nAddetti,nAcquirenti);
 
         //Instance of an array of Process
-        Acquirente[] acquirenti = new Acquirente[nAcquirenti];
+//        Acquirente[] acquirenti = new Acquirente[nAcquirenti];
         Addetto_spedizioni[] addetti = new Addetto_spedizioni[nAddetti];
 
+/*
         Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime);
         fornitore.start();
-
+*/
         //Instance the addetti
         for (int i = 0; i < addetti.length ; i++)
-            addetti[i] = new Addetto_spedizioni();
+            addetti[i] = new Addetto_spedizioni(i);
         for (int i = 0; i < addetti.length ; i++)
             addetti[i].start();
 
+        /*
         //Instance the acquirenti
         for (int i = 0; i < acquirenti.length ; i++)
-            acquirenti[i] = new Acquirente();
+            acquirenti[i] = new Acquirente(i);
         for (int i = 0; i < acquirenti.length ; i++)
             acquirenti[i].start();
-
+*/
         /* joins */
         try{
-            for (int i = 0; i < acquirenti.length ; i++)
-                acquirenti[i].join();
+  //          for (int i = 0; i < acquirenti.length ; i++)
+  //              acquirenti[i].join();
+
             for (int i = 0; i < addetti.length ; i++)
                 addetti[i].join();
-
+/*
             fornitore.join();
+   */
         }catch (InterruptedException e){
             System.out.println(e.toString());
             Log.writeLog(e.toString());
         }
 
-        fornitore.stop_Refilling();
+//        fornitore.stop_Refilling();
         printFinalPageList();
     }
 
@@ -74,6 +77,11 @@ public class Warehouse_Mgt {
         System.out.println("________________________________________________________");
         System.out.println("Fine");
         System.out.println("________________________________________________________");
+
+        //log
+        Log.writeLog("________________________________________________________");
+        Log.writeLog("Fine");
+        Log.writeLog("________________________________________________________");
         waitForEnter();
 
     } //end-printFinalPageList
