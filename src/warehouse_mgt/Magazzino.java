@@ -18,7 +18,6 @@ package warehouse_mgt;
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Magazzino {
@@ -33,8 +32,6 @@ public class Magazzino {
     private static final Semaphore sem = new Semaphore(1,true);//a guardia di lck
     //private static Condition orderToHandle = lck.newCondition();
     /* end-lock_mgt */
-
-    public boolean Orders_present = true;
 
     /* Lista ordini */
     private static final List<Order> order_List = new ArrayList<>();
@@ -85,7 +82,7 @@ public class Magazzino {
                 if (wait){
                     try{
                         Log.writeLog("Addetto " + addetto_spedizioni.getName() + " viene messo in wait");
-                        addetto_spedizioni.sleep(500);
+                        Thread.sleep(500);
                     } catch ( IllegalMonitorStateException ex) {
                         System.out.println("[Errore]" + addetto_spedizioni.getName() + ex.toString());
                     }finally {
@@ -96,7 +93,7 @@ public class Magazzino {
 
             if (ordine_da_gestire != null){
                 Log.writeLog("Addetto " + addetto_spedizioni.getName() + " sta gestendo i pacchi, ci vorrà " + ordine_da_gestire.getNum_pacchi_richiesti()*5 + " millisecondi");
-                addetto_spedizioni.sleep(5*ordine_da_gestire.getNum_pacchi_richiesti());
+                Thread.sleep(5*ordine_da_gestire.getNum_pacchi_richiesti());
                 int num_pacchi = ordine_da_gestire.getNum_pacchi_richiesti();
                 cm_nastro_disponibili -= (num_pacchi * 50);
                 scatole_disponibili -= num_pacchi;
@@ -113,9 +110,7 @@ public class Magazzino {
 
     private static boolean CanHandlePacchi(Order ordine_da_gestire) {
         int num_pacchi_richiesti = ordine_da_gestire.getNum_pacchi_richiesti();
-        if ((cm_nastro_disponibili > (num_pacchi_richiesti * 50)) & (scatole_disponibili > num_pacchi_richiesti))
-            return true;
-        return false;
+        return (cm_nastro_disponibili > (num_pacchi_richiesti * 50)) & (scatole_disponibili > num_pacchi_richiesti);
     }
 
     //invocato dai fornitori
