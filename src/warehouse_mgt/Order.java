@@ -13,4 +13,8 @@ public class Order {
     public int getNum_pacchi_richiesti(){
         return num_pacchi_richiesti;
     }
+
+    public String getNomeAcquirente() {
+        return(acquirente.getName());
+    }
 }

@@ -13,18 +13,19 @@ public class Fornitore_di_risorse extends Thread{
 
     public Fornitore_di_risorse(String name,int time)
     {
+        super(name);
         fTime = time;
         keepRefilling = true;
 
-        System.out.println("Fornitore " + name + " creato con tempo di ricarica di " + time + " minuti.");
-        Log.writeLog("Fornitore " + name + " creato con tempo di ricarica di " + time + " minuti.");
+        System.out.println("Fornitore " + name + " creato con tempo di ricarica di " + time + " millisecondi.");
+        Log.writeLog("Fornitore " + name + " creato con tempo di ricarica di " + time + " millisecondi.");
     }
 
     @Override
     public void run() {
         Random rnd = new Random();
-        int cm_nastro = rnd.nextInt(5000);
-        int nscatole = rnd.nextInt(100);
+        int cm_nastro = 750;//rnd.nextInt(5000);
+        int nscatole = 5;//rnd.nextInt(100);
 
         try{
             if (fTime != 0)
@@ -32,18 +33,19 @@ public class Fornitore_di_risorse extends Thread{
 
             if ((cm_nastro != 0) || (nscatole != 0))
             {
-                Magazzino.depositaRisorse(cm_nastro,nscatole);
+                Magazzino.depositaRisorse(this,cm_nastro,nscatole);
             }
         }catch(InterruptedException e){
             System.out.println(e.toString());
             Log.writeLog(e.toString());
         }finally {
-            if (keepRefilling)
-                run();
+            //commentato per test, riempie solo una volta il magazzino così
+            //if (keepRefilling)
+                //run();
         }
     }
 
-    public void stop_Refilling()
+    public void stopRefilling()
     {
         keepRefilling = false;
     }

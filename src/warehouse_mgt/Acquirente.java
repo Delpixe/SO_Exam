@@ -11,14 +11,10 @@ public class Acquirente extends Thread{
         super("Acquirente_" + num_Acquirente);
         Prime = RandomlyAssign_TipoAcquirente();
 
-        if (Prime) {
-            Log.writeLog("[" + getName() + "]" + " Creato Acquirente di tipo Prime");
-            System.out.println("[" + getName() + "]" + " Creato Acquirente di tipo Prime");
-        }
-        else{
-            Log.writeLog("[" + getName() + "]" + " Creato Acquirente di tipo Standard");
-            System.out.println("[" + getName() + "]" + " Creato Acquirente di tipo Standard");
-        }
+        if (Prime)
+            Log.writeLog(this.getName() + " creato acquirente di tipo Prime");
+        else
+            Log.writeLog(this.getName() + " creato acquirente di tipo Standard");
     }
 
     private boolean RandomlyAssign_TipoAcquirente() {

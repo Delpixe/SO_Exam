@@ -31,9 +31,10 @@ public class Magazzino {
     /* lock_mgt */
     private static final ReentrantLock lck = new ReentrantLock(true);
     private static final Semaphore sem = new Semaphore(1,true);//a guardia di lck
-    private static Condition notEmpty = lck.newCondition();
+    //private static Condition orderToHandle = lck.newCondition();
     /* end-lock_mgt */
 
+    public boolean Orders_present = true;
 
     /* Lista ordini */
     private static final List<Order> order_List = new ArrayList<>();
@@ -43,14 +44,19 @@ public class Magazzino {
         Magazzino.accedi_magazzino();
         Order ordine = new Order(acquirente_ordine,num_pacchi);
         order_List.add(ordine);
-        notEmpty.signal();
+        Log.writeLog(acquirente_ordine.getName() + " ha aggiunto un ordine di " + num_pacchi + " pacchi");
+        /*
+        try{
+            orderToHandle.signal();
+        }finally{
+            Magazzino.rilascia_magazzino();
+        }
+         */
         Magazzino.rilascia_magazzino();
-        Log.writeLog("Aggiunto ordine per " + num_pacchi + " pacchi");
-        System.out.println("Aggiunto ordine per " + num_pacchi + " pacchi");
     }
 
     //invocato dagli addetti_alle_spedizioni
-    public static void gestisciOrdine(){
+    public static void gestisciOrdine(Addetto_spedizioni addetto_spedizioni){
         /*
         Seleziona l’ordine da gestire secondo la politica FIFO
         Cerca di accaparrarsi un quantitativo di risorse proporzionale al numero di pacchi
@@ -62,40 +68,71 @@ public class Magazzino {
         · Se non trova risorse si sospende in attesa di queste.
          */
 
-        try{
-            while (order_List.isEmpty())
-                notEmpty.await();
+        boolean wait = true;
+        Order ordine_da_gestire = null;
 
-            Magazzino.accedi_magazzino();
-            Order ordine_da_gestire = order_List.get(0);
-            HandlePacchi(ordine_da_gestire);
-            Magazzino.rilascia_magazzino();
-        }catch (InterruptedException e){
-            System.out.println("non ci sono ordini in lista");
+        try{
+            //finche la lista degli ordini è vuota o la qta dell'ordine è maggiore del magazzino l'addetto aspetta
+            while (wait){
+                Magazzino.accedi_magazzino();
+
+                wait = (order_List.isEmpty());
+                ordine_da_gestire = null;
+                if (! wait){
+                    ordine_da_gestire = order_List.get(0);
+                    wait = (!CanHandlePacchi(ordine_da_gestire));
+                }
+                if (wait){
+                    try{
+                        Log.writeLog("Addetto " + addetto_spedizioni.getName() + " viene messo in wait");
+                        addetto_spedizioni.sleep(500);
+                    } catch ( IllegalMonitorStateException ex) {
+                        System.out.println("[Errore]" + addetto_spedizioni.getName() + ex.toString());
+                    }finally {
+                        Magazzino.rilascia_magazzino();
+                    }
+                }
+            }
+
+            if (ordine_da_gestire != null){
+                Log.writeLog("Addetto " + addetto_spedizioni.getName() + " sta gestendo i pacchi, ci vorrà " + ordine_da_gestire.getNum_pacchi_richiesti()*5 + " millisecondi");
+                addetto_spedizioni.sleep(5*ordine_da_gestire.getNum_pacchi_richiesti());
+                int num_pacchi = ordine_da_gestire.getNum_pacchi_richiesti();
+                cm_nastro_disponibili -= (num_pacchi * 50);
+                scatole_disponibili -= num_pacchi;
+                order_List.remove(ordine_da_gestire);
+                Log.writeLog("Addetto " + addetto_spedizioni.getName() + " ha gestito l'ordine da " + ordine_da_gestire.getNum_pacchi_richiesti() + " pacchi fatto da " + ordine_da_gestire.getNomeAcquirente());
+                Log.writeLog("Giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
+            }
+        }catch (InterruptedException e) {
             Log.writeLog("non ci sono ordini in lista");
+        }finally {
+            Magazzino.rilascia_magazzino();
         }
     }
 
-    private static void HandlePacchi(Order ordine_da_gestire) {
-        int num_pacchi = ordine_da_gestire.getNum_pacchi_richiesti();
-        if (((num_pacchi * 50) > (cm_nastro_disponibili)) || ((num_pacchi > scatole_disponibili))) {
-            try {
-                notEmpty.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        order_List.remove(ordine_da_gestire);
+    private static boolean CanHandlePacchi(Order ordine_da_gestire) {
+        int num_pacchi_richiesti = ordine_da_gestire.getNum_pacchi_richiesti();
+        if ((cm_nastro_disponibili > (num_pacchi_richiesti * 50)) & (scatole_disponibili > num_pacchi_richiesti))
+            return true;
+        return false;
     }
 
     //invocato dai fornitori
-    public static void depositaRisorse(int cm_nastro,int nscatole){
+    public static void depositaRisorse(Fornitore_di_risorse fornitore_di_risorse,int cm_nastro,int nscatole){
         Magazzino.accedi_magazzino();
         cm_nastro_disponibili += cm_nastro;
         scatole_disponibili += nscatole;
+        /*
+        try{
+            if (checkBeforeLockCondition())
+                orderToHandle.signal();
+        }finally{
+            Magazzino.rilascia_magazzino();
+        }
+        */
         Magazzino.rilascia_magazzino();
-        System.out.println("depositati " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
-        Log.writeLog("depositati " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
+        Log.writeLog(fornitore_di_risorse.getName() + " ha depositato " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
     }
 
     //lck and sem mgt
@@ -104,6 +141,7 @@ public class Magazzino {
             sem.acquire();
         }catch(InterruptedException e){
             System.out.println(e.toString());
+            Log.writeLog(e.toString());
         }
         lck.lock();
     }
@@ -113,5 +151,4 @@ public class Magazzino {
         sem.release();
     }
     //fine - lck and sem mgt
-
 }

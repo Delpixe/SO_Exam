@@ -27,10 +27,10 @@ public class Log {
 
     public static void insertPath(){
         if ((path == null) & (wannaWrite)){
-            SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd_HH_mm");
+            SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd");
 
             String logpath = FileSystems.getDefault().getPath("").toAbsolutePath().toString();
-            logpath += "\\log\\" + format.format(Calendar.getInstance().getTime()) + "\\";
+            logpath += "\\log\\";
             path = logpath;
 
             File file = new File(logpath);
@@ -49,7 +49,7 @@ public class Log {
             write_log_lck.lock();
 
             try {
-                SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd");
+                SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd_HH_mm");
                 File f1 = new File(path +"/log_" + format.format(Calendar.getInstance().getTime()) + ".log");
 
 

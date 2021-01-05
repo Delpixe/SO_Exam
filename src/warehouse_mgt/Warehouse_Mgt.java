@@ -15,13 +15,11 @@ public class Warehouse_Mgt {
 
         welcome(nAddetti,nAcquirenti);
 
-        //Instance of an array of Process
-//        Acquirente[] acquirenti = new Acquirente[nAcquirenti];
-        Addetto_spedizioni[] addetti = new Addetto_spedizioni[nAddetti];
-
-/*
         Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime);
         fornitore.start();
+
+        Acquirente[] acquirenti = new Acquirente[1];
+        Addetto_spedizioni[] addetti = new Addetto_spedizioni[1];
 
         //Instance the acquirenti
         for (int i = 0; i < acquirenti.length ; i++)
@@ -37,20 +35,19 @@ public class Warehouse_Mgt {
 
         /* joins */
         try{
-  //          for (int i = 0; i < acquirenti.length ; i++)
-  //              acquirenti[i].join();
+            fornitore.join();
+
+            for (int i = 0; i < acquirenti.length ; i++)
+                acquirenti[i].join();
 
             for (int i = 0; i < addetti.length ; i++)
                 addetti[i].join();
-/*
-            fornitore.join();
-   */
+
         }catch (InterruptedException e){
-            System.out.println(e.toString());
             Log.writeLog(e.toString());
         }
 
-//        fornitore.stop_Refilling();
+        fornitore.stopRefilling();
         printFinalPageList();
     }
 

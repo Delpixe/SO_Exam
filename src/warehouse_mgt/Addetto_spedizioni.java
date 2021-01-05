@@ -26,6 +26,8 @@ public class Addetto_spedizioni extends Thread{
 
     @Override
     public void run() {
-        Magazzino.gestisciOrdine();
+        do {
+            Magazzino.gestisciOrdine(this);
+        }while (Magazzino.)
     }
 }
