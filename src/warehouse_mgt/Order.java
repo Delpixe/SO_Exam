@@ -3,10 +3,10 @@ package warehouse_mgt;
 public class Order {
 
     private int num_pacchi_richiesti;
-    private Acquirente acquirente;
+    private Acquirente acquirente_ordine;
 
     public Order(Acquirente acquirente_ordine, int num_pacchi){
-        this.acquirente = acquirente_ordine;
+        this.acquirente_ordine = acquirente_ordine;
         this.num_pacchi_richiesti = num_pacchi;
     }
 
@@ -15,6 +15,6 @@ public class Order {
     }
 
     public String getNomeAcquirente() {
-        return(acquirente.getName());
+        return(this.acquirente_ordine.getName());
     }
 }

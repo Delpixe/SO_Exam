@@ -8,20 +8,22 @@ public class Warehouse_Mgt {
         if (Log.wannaWriteLog())
             Log.insertPath();
 
+        /*
         Random rnd = new Random();
         int nAddetti = rnd.nextInt(1000);
         int nAcquirenti = rnd.nextInt(1000);
         int fTime = Math.abs(rnd.nextInt(5000)); //messi 5 secondi per semplicità di testing
+        */
+        welcome(1,1);
 
-        welcome(nAddetti,nAcquirenti);
-
-        Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime);
+        Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",1000);
         fornitore.start();
 
         Acquirente[] acquirenti = new Acquirente[1];
-        Addetto_spedizioni[] addetti = new Addetto_spedizioni[1];
+        Addetto_spedizioni[] addetti = new Addetto_spedizioni[10];
 
         //Instance the acquirenti
+
         for (int i = 0; i < acquirenti.length ; i++)
             acquirenti[i] = new Acquirente(i);
         for (int i = 0; i < acquirenti.length ; i++)
@@ -33,11 +35,10 @@ public class Warehouse_Mgt {
         for (int i = 0; i < addetti.length ; i++)
             addetti[i].start();
 
-        /* joins */
         try{
-            fornitore.join();
+//            fornitore.join(); //non ci deve stare altrimenti non finisce mai
 
-            for (int i = 0; i < acquirenti.length ; i++)
+           for (int i = 0; i < acquirenti.length ; i++)
                 acquirenti[i].join();
 
             for (int i = 0; i < addetti.length ; i++)
