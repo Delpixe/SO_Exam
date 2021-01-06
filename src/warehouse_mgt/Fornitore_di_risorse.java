@@ -23,17 +23,19 @@ public class Fornitore_di_risorse extends Thread{
     @Override
     public void run() {
         Random rnd = new Random();
-        int nscatole = 5;//rnd.nextInt(10);
-        int cm_nastro = nscatole * 50;
+        int nscatole;
+        int cm_nastro;
 
         try{
-            if (fTime != 0)
-                sleep(fTime);
+            nscatole = rnd.nextInt(10);
+            cm_nastro = nscatole * 50;
 
             if ((cm_nastro != 0) || (nscatole != 0))
             {
                 Magazzino.depositaRisorse(this,cm_nastro,nscatole);
             }
+            if (fTime != 0)
+                this.sleep(fTime);
         }catch(InterruptedException e){
             System.out.println(e.toString());
             Log.writeLog(e.toString());

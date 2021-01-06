@@ -10,17 +10,18 @@ public class Warehouse_Mgt {
 
         /*
         Random rnd = new Random();
-        int nAddetti = rnd.nextInt(1000);
-        int nAcquirenti = rnd.nextInt(1000);
-        int fTime = Math.abs(rnd.nextInt(5000)); //messi 5 secondi per semplicità di testing
         */
-        welcome(1,1);
+        int nAddetti = 100;//rnd.nextInt(1000);
+        int nAcquirenti = 10;//rnd.nextInt(1000);
+        int fTime = 1000;//Math.abs(rnd.nextInt(5000)); //messi 5 secondi per semplicità di testing
 
-        Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",1000);
+        welcome(nAddetti,nAcquirenti);
+
+        Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime);
         fornitore.start();
 
-        Acquirente[] acquirenti = new Acquirente[1];
-        Addetto_spedizioni[] addetti = new Addetto_spedizioni[10];
+        Acquirente[] acquirenti = new Acquirente[nAcquirenti];
+        Addetto_spedizioni[] addetti = new Addetto_spedizioni[nAddetti];
 
         //Instance the acquirenti
 
@@ -36,7 +37,7 @@ public class Warehouse_Mgt {
             addetti[i].start();
 
         try{
-//            fornitore.join(); //non ci deve stare altrimenti non finisce mai
+            //non ci deve stare altrimenti non finisce mai --> fornitore.join altrimenti non finirebbe mai il loop
 
            for (int i = 0; i < acquirenti.length ; i++)
                 acquirenti[i].join();
@@ -49,6 +50,7 @@ public class Warehouse_Mgt {
         }
 
         fornitore.stopRefilling();
+        fornitore.interrupt();
         printFinalPageList();
     }
 
@@ -84,7 +86,7 @@ public class Warehouse_Mgt {
     } //end-printFinalPageList
 
     public static void waitForEnter() {
-        System.out.println("Premi Invio per continuare...");
+        System.out.println("Premi Invio per uscire...");
         Utility.ReadLine();
     }//end-waitForEnter
 }

@@ -43,11 +43,15 @@ public class Magazzino {
     public static void effettuaOrdine(Acquirente acquirente_ordine,int num_pacchi){
         Magazzino.accediMagazzino();
         Order ordine = new Order(acquirente_ordine,num_pacchi);
-        if (acquirente_ordine.Prime)
+        if (acquirente_ordine.Prime) {
             prime_order_List.add(ordine);
-        else
+            Log.writeLog(acquirente_ordine.getName() + " ha aggiunto l'ordine PRIME <"+ ordine.getNumero_ordine() +"> contenente " + num_pacchi + " pacchi");
+        }
+        else{
             std_order_List.add(ordine);
-        Log.writeLog(acquirente_ordine.getName() + " ha aggiunto un ordine di " + num_pacchi + " pacchi");
+            Log.writeLog(acquirente_ordine.getName() + " ha aggiunto l'ordine STANDARD <"+ ordine.getNumero_ordine() +"> contenente " + num_pacchi + " pacchi");
+        }
+
         /*
         try{
             orderToHandle.signal();
@@ -69,14 +73,21 @@ public class Magazzino {
             ordine_da_gestire = getOrder(addetto_spedizioni, ordine_da_gestire);
 
             if (ordine_da_gestire != null){
-                Log.writeLog("Addetto " + addetto_spedizioni.getName() + " sta gestendo i pacchi, ci vorrà " + ordine_da_gestire.getNum_pacchi_richiesti()*5 + " millisecondi");
+                String frase_log = "l'ordine <"+ordine_da_gestire.getNumero_ordine() + "> da " + ordine_da_gestire.getNum_pacchi_richiesti() + " pacchi fatto da " + ordine_da_gestire.getNomeAcquirente();
+
+                Log.writeLog("Addetto " + addetto_spedizioni.getName() + " sta gestendo "+frase_log +" ci vorranno " + ordine_da_gestire.getNum_pacchi_richiesti()*5 + " millisecondi");
+
                 addetto_spedizioni.sleep(5*ordine_da_gestire.getNum_pacchi_richiesti());
                 int num_pacchi = ordine_da_gestire.getNum_pacchi_richiesti();
                 cm_nastro_disponibili -= (num_pacchi * 50);
                 scatole_disponibili -= num_pacchi;
                 std_order_List.remove(ordine_da_gestire);
-                Log.writeLog("Addetto " + addetto_spedizioni.getName() + " ha gestito l'ordine da " + ordine_da_gestire.getNum_pacchi_richiesti() + " pacchi fatto da " + ordine_da_gestire.getNomeAcquirente());
+
+                //Log.writeLog("Addetto " + addetto_spedizioni.getName() + " ha gestito "+frase_log);
                 Log.writeLog("Giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
+
+                //lo rilancio?
+                //addetto_spedizioni.gestisciOrdine();
             }
         }catch (InterruptedException e) {
             Log.writeLog("non ci sono ordini in lista");
@@ -108,7 +119,7 @@ public class Magazzino {
             }
             if (gestisci_ordine){
                 try{
-                    Log.writeLog("Addetto " + addetto_spedizioni.getName() + " è in attesa");
+                    //Log.writeLog("Addetto " + addetto_spedizioni.getName() + " è in attesa");
                     Magazzino.rilasciaMagazzino();
                     addetto_spedizioni.sleep(1000);
                 } catch ( IllegalMonitorStateException ex) {
@@ -132,8 +143,9 @@ public class Magazzino {
             Magazzino.rilascia_magazzino();
         }
         */
+        Log.writeLog(fornitore_di_risorse.getName() + " ha depositato " + nscatole + " scatole e "+ cm_nastro + " cm di nastro");
+        Log.writeLog("Grazie a "+ fornitore_di_risorse.getName() +" la giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
         Magazzino.rilasciaMagazzino();
-        Log.writeLog(fornitore_di_risorse.getName() + " ha depositato " + cm_nastro + " cm di nastro e " + nscatole + " scatole");
     }
 
     //lck and sem mgt

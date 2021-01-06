@@ -48,12 +48,13 @@ public class Acquirente extends Thread{
 
     private void RandomlyWait() {
         Random rnd = new Random();
-        int random_waitingSeconds = rnd.nextInt(50);
+        int random_waitingSeconds = rnd.nextInt(5000);
 
         try {
+            Log.writeLog("Acquirente " + this.getName() + " sta piazzando l'ordine, ci vorranno " + random_waitingSeconds + " millisecondi");
             sleep(random_waitingSeconds);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.writeLog("[ERRORE] " + e.toString());
         }
     }
 
