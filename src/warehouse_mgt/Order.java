@@ -24,4 +24,8 @@ public class Order {
     public Integer getNumero_ordine() { return this.numero_ordine; }
 
     public Integer getOrderNos() { return orderNos; }
+
+    public Acquirente getAcquirente_ordine() {
+        return acquirente_ordine;
+    }
 }

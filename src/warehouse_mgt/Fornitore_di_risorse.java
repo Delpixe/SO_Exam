@@ -26,24 +26,27 @@ public class Fornitore_di_risorse extends Thread{
         int nscatole;
         int cm_nastro;
 
-        try{
-            nscatole = rnd.nextInt(10);
-            cm_nastro = nscatole * 50;
+        while(keepRefilling){
+            try{
+                nscatole = rnd.nextInt(10);
+                cm_nastro = nscatole * 50;
 
-            if ((cm_nastro != 0) || (nscatole != 0))
-            {
-                Magazzino.depositaRisorse(this,cm_nastro,nscatole);
+                if ((cm_nastro != 0) || (nscatole != 0))
+                {
+                    Magazzino.depositaRisorse(this,cm_nastro,nscatole);
+                }
+                if (fTime != 0)
+                    this.sleep(fTime);
+            }catch(InterruptedException e){
+                System.out.println(e.toString());
+                Log.writeLog(e.toString());
             }
-            if (fTime != 0)
-                this.sleep(fTime);
-        }catch(InterruptedException e){
-            System.out.println(e.toString());
-            Log.writeLog(e.toString());
-        }finally {
-            //commentato per test, riempie solo una volta il magazzino così --> trovare il modo di farlo smettere
-            if (keepRefilling)
-                run();
         }
+        Log.writeLog("Fronitore " + this.getName() + " ha finito di riempire il magazzino.");
+    }
+
+    public boolean isKeepRefilling() {
+        return keepRefilling;
     }
 
     public void stopRefilling()

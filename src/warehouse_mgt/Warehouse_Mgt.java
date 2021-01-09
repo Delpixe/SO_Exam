@@ -8,12 +8,11 @@ public class Warehouse_Mgt {
         if (Log.wannaWriteLog())
             Log.insertPath();
 
-        /*
+
         Random rnd = new Random();
-        */
-        int nAddetti = 100;//rnd.nextInt(1000);
-        int nAcquirenti = 10;//rnd.nextInt(1000);
-        int fTime = 1000;//Math.abs(rnd.nextInt(5000)); //messi 5 secondi per semplicità di testing
+        int nAddetti = 10;//rnd.nextInt(1000);
+        int nAcquirenti = 2;//rnd.nextInt(1000);
+        int fTime = Math.abs(rnd.nextInt()+ 2000); //messi almeno 2 secondi per semplicità di testing
 
         welcome(nAddetti,nAcquirenti);
 
@@ -37,20 +36,22 @@ public class Warehouse_Mgt {
             addetti[i].start();
 
         try{
-            //non ci deve stare altrimenti non finisce mai --> fornitore.join altrimenti non finirebbe mai il loop
-
            for (int i = 0; i < acquirenti.length ; i++)
                 acquirenti[i].join();
+        }catch (InterruptedException e){
+            Log.writeLog(e.toString());
+        }
 
+        for (int i = 0; i < addetti.length ; i++)
+            addetti[i].setStayAlive(false);
+        try{
             for (int i = 0; i < addetti.length ; i++)
                 addetti[i].join();
-
         }catch (InterruptedException e){
             Log.writeLog(e.toString());
         }
 
         fornitore.stopRefilling();
-        fornitore.interrupt();
         printFinalPageList();
     }
 

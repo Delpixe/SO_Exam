@@ -5,38 +5,34 @@ import java.util.Random;
 public class Acquirente extends Thread{
 //singolo thread
     //tipologia acquirente = false -> standard = true -> prime
-    public boolean Prime;
+    public boolean isPrime;
+    private boolean inAttesa;
+    private int numOrdinidaEvadere = 10;
 
     public Acquirente(int num_Acquirente){
         super("Acquirente_" + num_Acquirente);
-        Prime = RandomlyAssign_TipoAcquirente();
+        this.isPrime = Randomly_IsPrime();
 
-        if (Prime)
+        if (this.isPrime)
             Log.writeLog(this.getName() + " creato acquirente di tipo Prime");
         else
             Log.writeLog(this.getName() + " creato acquirente di tipo Standard");
     }
 
-    private boolean RandomlyAssign_TipoAcquirente() {
+    private boolean Randomly_IsPrime() {
         Random rnd = new Random();
         int random_Number = rnd.nextInt(10) + 1;
-        boolean isPrime = false;
+        boolean prime = false;
 
         switch (random_Number){
             case 1,2,3:
-                isPrime = true;
+                prime = true;
+                break;
             case 4,5,6,7,8,9,10:
-                isPrime = false;
+                prime = false;
+                break;
         }
-        return isPrime;
-    }
-
-    public void Place_Orders(){
-        for (int num_Ordine = 0;num_Ordine < 10;num_Ordine++)
-        {
-            RandomlyWait();
-            Place_Single_Order();
-        }
+        return prime;
     }
 
     private void Place_Single_Order() {
@@ -58,8 +54,27 @@ public class Acquirente extends Thread{
         }
     }
 
+    public void resta_in_attesa() {
+        this.inAttesa = true;
+    }
+
+    public void riprendi() {
+        this.inAttesa = false;
+    }
+
     @Override
     public void run() {
-        Place_Orders();
+        //for (int num_Ordine = 0;num_Ordine < 10;num_Ordine++)
+        int num_ordine = 0;
+
+        while(num_ordine < this.numOrdinidaEvadere)
+        {
+            while(!this.inAttesa){
+                num_ordine++;
+                RandomlyWait();
+                Place_Single_Order();
+            }
+        }
+        Log.writeLog("Acquirente " + this.getName() + " ha finito di emettere ordini.");
     }
 }

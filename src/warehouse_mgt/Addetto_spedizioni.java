@@ -18,18 +18,22 @@ nel magazzino.
 package warehouse_mgt;
 
 public class Addetto_spedizioni extends Thread{
+    public boolean stayAlive;
 
     public Addetto_spedizioni(int num_addetto)
     {
         super("Addetto_" + num_addetto);
+         this.stayAlive = true;
     }
 
     @Override
     public void run() {
-        gestisciOrdine();
+        //while(this.stayAlive)
+            Magazzino.gestisciOrdine(this);
+            Log.writeLog( "Addetto "+ this.getName() + " ha finito di girare.");
     }
 
-    public void gestisciOrdine(){
-        Magazzino.gestisciOrdine(this);
+    public void setStayAlive(boolean stayAlive) {
+        this.stayAlive = stayAlive;
     }
 }
