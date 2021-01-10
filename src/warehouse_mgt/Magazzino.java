@@ -1,162 +1,152 @@
-/*
-nel magazzino si trovano un numero nAddetti di addetti alle spedizioni che
-gestiscono gli ordini di acquisto effettuati da un numero nAcquirenti di acquirenti.
-
-Gli acquirenti potranno essere di due tipi:
-- standard
-- prime
-effettueranno ordini per un numero variabile di pacchi (scelto casualmente).
-
-Nel magazzino è presente un fornitore di risorse che periodicamente fornisce agli addetti alle spedizioni
-una quantità variabile (scelta casualmente) di scatole e di nastro adesivo, utilizzati per gestire gli
-ordini.
-
-La simulazione terminerà quando tutti gli acquirenti avranno sottomesso 10 richieste ciascuno.
-*/
-
 package warehouse_mgt;
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Magazzino {
 
-    /* Risorse */
-    private static int cm_nastro_disponibili = 0;
-    private static int scatole_disponibili = 0;
-    /* end-Risorse */
+    // costanti per codificare il servizio richiesto
+    public static final String PRIME    = "PRIME";
+    public static final String STANDARD = "STANDARD";
 
-    /* lock_mgt */
-    private static final ReentrantLock lck = new ReentrantLock(true);
-    private static final Semaphore sem = new Semaphore(1,true);//a guardia di lck
-    //private static Condition orderToHandle = lck.newCondition();
-    /* end-lock_mgt */
+    //strutture per emulare le liste degli ordini
+    //prime e standard
+    private final ArrayList<Order> standard_list;
+    private final ArrayList<Order> prime_list;
+
+    // attributi di sincronizzazione lock per la mutua esclusione
+    // a guardia di standard_list, prime_list
+    private final ReentrantLock lck;
+
+    // semaforo contatore per sospendere il Controllore
+    // in attesa di nuove richieste
+    private final Semaphore nuoveRichieste;
+
+    //Risorse
+    private int cm_nastro_disponibili;
+    private int scatole_disponibili;
+
+    //costruttore della classe
+    public Magazzino(){
+        this.standard_list = new ArrayList();
+        this.prime_list = new ArrayList();
+
+        this.lck = new ReentrantLock(true);
+        this.nuoveRichieste = new Semaphore(0,true);
+
+        this.cm_nastro_disponibili = 0;
+        this.scatole_disponibili = 0;
+    }//end costruttore
+
+    /********** Metodi **********/
+    //metodi pubblici dell'oggetto Magazzino
+    //1)effettuaOrdine: invocato dall'Acquirente per inserire il proprio ordine in lista
+    //2)gestisciOrdine: invocato dall'Addetto_spedizioni per gestire e rimuovere l'ordine dalla lista
+    //3)depositaRisorse: omvpcatp dal Fornitore_di_risorse per aggiungere merce al magazzino
 
 
-    /* Lista ordini */
-    private static final List<Order> std_order_List = new ArrayList<>();
-    private static final List<Order> prime_order_List = new ArrayList<>();
-
-
-    /********** Funzioni **********/
     //invocato dagli acquirenti
-    public static void effettuaOrdine(Acquirente acquirente_ordine,int num_pacchi){
-        Magazzino.accediMagazzino();
+    //!todo funzionante
+    public void effettuaOrdine(Acquirente acquirente_ordine,int num_pacchi){
+        this.lck.lock();
+        try{
+            Order ordine = new Order(acquirente_ordine,num_pacchi);
+            Log.writeLog(acquirente_ordine.getName() + " mette in coda l'ordine <"+ ordine.getNumero_ordine() +"> contenente " + num_pacchi + " pacchi");
+            if (acquirente_ordine.getTipoAcquirente().equals(PRIME))
+                prime_list.add(ordine);
+            else
+                standard_list.add(ordine);
 
-        Order ordine = new Order(acquirente_ordine,num_pacchi);
-        if (acquirente_ordine.isPrime) {
-            prime_order_List.add(ordine);
-            Log.writeLog(acquirente_ordine.getName() + " ha aggiunto l'ordine PRIME <"+ ordine.getNumero_ordine() +"> contenente " + num_pacchi + " pacchi");
+            // devo svegliare l'addetto se sta dormendo
+            this.nuoveRichieste.release();
+            // sospendo l'acquirente con il metodo interno    
+            acquirente_ordine.setCondition(this.lck.newCondition());
+            acquirente_ordine.sospendi();
+        }catch(InterruptedException e){
+            Log.writeLog(e.toString());
+        }finally{
+            this.lck.unlock();
+            //FINE SEZIONE CRITICA
         }
-        else{
-            std_order_List.add(ordine);
-            Log.writeLog(acquirente_ordine.getName() + " ha aggiunto l'ordine STANDARD <"+ ordine.getNumero_ordine() +"> contenente " + num_pacchi + " pacchi");
-        }
-        Magazzino.rilasciaMagazzino();
-        acquirente_ordine.resta_in_attesa();
-    }
+    }//end effettuaOrdine
 
     //invocato dagli addetti_alle_spedizioni
-    public static void gestisciOrdine(Addetto_spedizioni addetto_spedizioni){
-        while (addetto_spedizioni.stayAlive) {
-            //finche la lista degli ordini è vuota o la qta dell'ordine è maggiore del magazzino l'addetto aspetta
-            Order ordine_da_gestire = getOrder(addetto_spedizioni);
-            if (ordine_da_gestire != null) {
-                    String frase_log = "l'ordine <" + ordine_da_gestire.getNumero_ordine() + "> da " + ordine_da_gestire.getNum_pacchi_richiesti() + " pacchi fatto da " + ordine_da_gestire.getNomeAcquirente();
-                    Log.writeLog("Addetto " + addetto_spedizioni.getName() + " sta gestendo " + frase_log + " ci vorranno " + ordine_da_gestire.getNum_pacchi_richiesti() * 5 + " millisecondi");
-
-                try {
-                    addetto_spedizioni.sleep(5 * ordine_da_gestire.getNum_pacchi_richiesti());
-                    int num_pacchi = ordine_da_gestire.getNum_pacchi_richiesti();
-                    cm_nastro_disponibili -= (num_pacchi * 50);
-                    scatole_disponibili -= num_pacchi;
-                    if (ordine_da_gestire.getAcquirente_ordine().isPrime)
-                        prime_order_List.remove(ordine_da_gestire);
-                    else
-                        std_order_List.remove(ordine_da_gestire);
-
-                    ordine_da_gestire.getAcquirente_ordine().riprendi();
-                } catch (InterruptedException e) {
-                    Log.writeLog("non ci sono ordini in lista");
-                } finally {
-                    Log.writeLog( addetto_spedizioni.getName() + " ha appena evaso l'ordine di " + ordine_da_gestire.getAcquirente_ordine().getName());
-                    Log.writeLog("Giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
-                    Magazzino.rilasciaMagazzino();
-                }
-            }
-        }
-    }
-
-    private static Order getOrder(Addetto_spedizioni addetto_spedizioni) {
-        boolean primeIsEmpty;
-        boolean stdIsEmpty;
-        boolean liste_vuote = true;
-        Order ordine_da_gestire = null;
-
-        //while (liste_vuote){
-            Magazzino.accediMagazzino();
-            //controllo se siano vuote le liste
-            stdIsEmpty = std_order_List.isEmpty();
-            primeIsEmpty = prime_order_List.isEmpty();
-            liste_vuote = (stdIsEmpty & primeIsEmpty);
-            ordine_da_gestire = null;
-
-            //se una delle due non è vuota
-            if (!liste_vuote){
-                if (!primeIsEmpty)
-                    ordine_da_gestire = prime_order_List.get(0);
-                else
-                    ordine_da_gestire = std_order_List.get(0);
-
-                liste_vuote = (!CanHandlePacchi(ordine_da_gestire));
-            }
-            if (liste_vuote){
-                try{
-                    //Log.writeLog("Addetto " + addetto_spedizioni.getName() + " è in attesa");
-                    Magazzino.rilasciaMagazzino();
-                    return(null);
-                } catch ( IllegalMonitorStateException ex) {
-                    System.out.println("[Errore]" + addetto_spedizioni.getName() + ex.toString());
-                }
-            }
-        //}
-        return ordine_da_gestire;
-    }
-
-    //invocato dai fornitori
-    public static void depositaRisorse(Fornitore_di_risorse fornitore_di_risorse,int cm_nastro,int nscatole){
-        Magazzino.accediMagazzino();
-        if (fornitore_di_risorse.isKeepRefilling()) {
-            cm_nastro_disponibili += cm_nastro;
-            scatole_disponibili += nscatole;
-            Log.writeLog(fornitore_di_risorse.getName() + " ha depositato " + nscatole + " scatole e " + cm_nastro + " cm di nastro. La giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
-        }
-        Magazzino.rilasciaMagazzino();
-    }
-
-    //lck and sem mgt
-    public static void accediMagazzino(){
-        try{
-            sem.acquire();
-        }catch(InterruptedException e){
-            System.out.println(e.toString());
+    //!todo NON funzionante
+    public void gestisciOrdine(Addetto_spedizioni addetto_spedizioni) throws InterruptedException {
+        // acquisisco un permesso sul semaforo delle richieste
+        try {
+            this.nuoveRichieste.acquire();
+        } catch (InterruptedException e) {
             Log.writeLog(e.toString());
         }
-        lck.lock();
-    }
+        // ora so che c'è almeno una richiesta in attesa di essere servita
+        // posso finalmente gesitere una richiesta devo cercare l'Ordine migliore nelle mie code
+        this.lck.lock();
+        try{
+            Order firstOrder = selectFIFOOrder();
+            if (firstOrder != null){
+                int num_pacchi_usati = firstOrder.getNum_pacchi_richiesti();
+                Log.writeLog(addetto_spedizioni.getName() + " sta gestendo l'ordine: " +
+                        firstOrder.getNumero_ordine() + " di tipo " +
+                        firstOrder.getAcquirente_ordine().getTipoAcquirente() + " contente " +
+                        num_pacchi_usati);
 
-    public static void rilasciaMagazzino(){
-        lck.unlock();
-        sem.release();
-    }
+                // sveglio l'Ordine selezionato
+                this.scatole_disponibili -= num_pacchi_usati;
+                this.cm_nastro_disponibili -= num_pacchi_usati * 50;
+
+                firstOrder.getAcquirente_ordine().risveglia();
+            }
+        }finally{
+            this.lck.unlock();
+            //FINE SEZIONE CRITICA
+        }
+
+
+    }//end gestisciOrdine
+
+    // metodo privato funzionale per trovare l'ordine per fifo e prio
+    private Order selectFIFOOrder(){
+        Order best = null;
+        // la precedenza deve essere sempre data all'atterraggio
+        if(!this.prime_list.isEmpty())
+            best = getAndRemoveFirst(this.prime_list);
+        else if(!this.standard_list.isEmpty())
+            best = getAndRemoveFirst(this.standard_list);
+        return best;
+    }//end selectFIFOOrder
+
+    // metodo privato per trovare il miglior ordine
+    // all'interno di una coda e rimuoverlo
+    private Order getAndRemoveFirst(List<Order> orderList){
+        Order best;
+        best = orderList.get(0);
+        // rimuovo il primo dalla coda
+        if (!CanHandlePacchi(best))
+            return null;
+
+        orderList.remove(best);
+        return best;
+    }//end getAndRemoveFirst
+
+    //invocato dai fornitori
+    public void depositaRisorse(Fornitore_di_risorse fornitore_di_risorse,int cm_nastro,int nscatole){
+        this.lck.lock();
+
+        cm_nastro_disponibili += cm_nastro;
+        scatole_disponibili += nscatole;
+        Log.writeLog(fornitore_di_risorse.getName() + " ha depositato " + nscatole + " scatole e " + cm_nastro + " cm di nastro. La giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
+
+        this.lck.unlock();
+    }//end depositaRisorse
+
     //fine - lck and sem mgt
 
     //funzioni extra
-    private static boolean CanHandlePacchi(Order ordine) {
+    private boolean CanHandlePacchi(Order ordine) {
         int num_pacchi_richiesti = ordine.getNum_pacchi_richiesti();
         return (cm_nastro_disponibili >= (num_pacchi_richiesti * 50)) & (scatole_disponibili >= num_pacchi_richiesti);
-    }
+    }//end CanHandlePacchi
 
 }

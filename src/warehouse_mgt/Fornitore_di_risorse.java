@@ -9,48 +9,40 @@ import java.util.Random;
 public class Fornitore_di_risorse extends Thread{
 
     private final int fTime;
-    private boolean keepRefilling;
+    private Magazzino myMagazzino;
 
-    public Fornitore_di_risorse(String name,int time_ms)
+    public Fornitore_di_risorse(String name,int time_ms,Magazzino mag)
     {
         super(name);
-        fTime = time_ms;
-        keepRefilling = true;
+        this.myMagazzino = mag;
+        this.fTime = time_ms;
 
         Log.writeLog("Fornitore " + name + " creato con tempo di ricarica di " + time_ms + " millisecondi.");
-    }
+    }//end costruttore
 
     @Override
     public void run() {
         Random rnd = new Random();
-        int nscatole;
-        int cm_nastro;
+        int nscatole_rifornimento;
+        int cm_nastro_rifornimento;
+        boolean isAlive = true;
 
-        while(keepRefilling){
+        while(isAlive){
             try{
-                nscatole = rnd.nextInt(10);
-                cm_nastro = nscatole * 50;
+                nscatole_rifornimento = rnd.nextInt(10);
+                cm_nastro_rifornimento = nscatole_rifornimento * 50;
 
-                if ((cm_nastro != 0) || (nscatole != 0))
-                {
-                    Magazzino.depositaRisorse(this,cm_nastro,nscatole);
-                }
-                if (fTime != 0)
+                if ((cm_nastro_rifornimento != 0) || (nscatole_rifornimento != 0))
+                    this.myMagazzino.depositaRisorse(this,cm_nastro_rifornimento,nscatole_rifornimento);
+
+                if (this.fTime != 0)
                     this.sleep(fTime);
             }catch(InterruptedException e){
-                System.out.println(e.toString());
                 Log.writeLog(e.toString());
+                isAlive = false;
             }
         }
-        Log.writeLog("Fronitore " + this.getName() + " ha finito di riempire il magazzino.");
-    }
+        Log.writeLog(super.getName() + " termina...");
+    }//end metodo run()
 
-    public boolean isKeepRefilling() {
-        return keepRefilling;
-    }
-
-    public void stopRefilling()
-    {
-        keepRefilling = false;
-    }
-}
+}//end classe Fornitore_di_risorse
