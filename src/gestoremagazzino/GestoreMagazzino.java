@@ -1,8 +1,8 @@
-package warehouse_mgt;
+package gestoremagazzino;
 
 import java.util.Random;
 
-public class Warehouse_Mgt {
+public class GestoreMagazzino {
 
     public static void main(String[] args) {
         //Avvio la simulazione
@@ -11,9 +11,9 @@ public class Warehouse_Mgt {
             Log.insertPath();
 
         Random rnd = new Random();
-        int nAddetti = 1;//rnd.nextInt(1000);
-        int nAcquirenti = 1;//rnd.nextInt(1000);
-        int fTime = Math.abs(rnd.nextInt()+ 2000); //messi almeno 2 secondi per semplicità di testing
+        int nAddetti = rnd.nextInt(100);
+        int nAcquirenti = rnd.nextInt(100);
+        int fTime = Math.abs(rnd.nextInt(3000)+ 2000); //messi almeno 2 secondi per semplicità di testing
 
         Magazzino magazzino = new Magazzino();
         Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime,magazzino);
@@ -40,10 +40,10 @@ public class Warehouse_Mgt {
            for (int i = 0; i < acquirenti.length ; i++)
                 acquirenti[i].join();
 
-            //mi metto in attesa della terminazione dei thread addetti
-            for (int i = 0; i < addetti.length ; i++)
+            for (int i = 0; i < addetti.length ; i++) {
+                addetti[i].interrupt();
                 addetti[i].join();
-
+            }
             //genero l'interrupt per far terminare il fornitore
             fornitore.interrupt();
             fornitore.join();
@@ -81,7 +81,7 @@ public class Warehouse_Mgt {
         Log.writeLog("________________________________________________________");
         Log.writeLog("Simulazione terminata.");
         Log.writeLog("________________________________________________________");
-        waitForEnter();
+       // waitForEnter();
 
     } //end-printFinalPageList
 

@@ -1,4 +1,4 @@
-package warehouse_mgt;
+package gestoremagazzino;
 
 import java.io.BufferedReader;
 import java.io.IOException;

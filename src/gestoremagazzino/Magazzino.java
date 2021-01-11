@@ -1,5 +1,6 @@
-package warehouse_mgt;
+package gestoremagazzino;
 
+import java.lang.module.ModuleReader;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
@@ -72,19 +73,26 @@ public class Magazzino {
     }//end effettuaOrdine
 
     //invocato dagli addetti_alle_spedizioni
-    //!todo NON funzionante
+    //!todo funzionante , però al primo giro entra da vuoto...
     public void gestisciOrdine(Addetto_spedizioni addetto_spedizioni) throws InterruptedException {
         // acquisisco un permesso sul semaforo delle richieste
-        try {
-            this.nuoveRichieste.acquire();
-        } catch (InterruptedException e) {
-            Log.writeLog(e.toString());
-        }
+        this.nuoveRichieste.acquire();
         // ora so che c'è almeno una richiesta in attesa di essere servita
         // posso finalmente gesitere una richiesta devo cercare l'Ordine migliore nelle mie code
+
         this.lck.lock();
         try{
-            Order firstOrder = selectFIFOOrder();
+            Order firstOrder = null;
+            while (firstOrder == null) {
+                firstOrder = selectFIFOOrder(false);
+
+                if (firstOrder == null)
+                    this.magazzinoRifornito.acquire();
+            }
+
+            Log.writeLog(addetto_spedizioni.getName() + " scruta la lista:");
+            this.stampaListe();
+            Order firstOrder = selectFIFOOrder(false);
             if (firstOrder != null){
                 int num_pacchi_usati = firstOrder.getNum_pacchi_richiesti();
                 Log.writeLog(addetto_spedizioni.getName() + " sta gestendo l'ordine: " +
@@ -95,6 +103,10 @@ public class Magazzino {
                 // sveglio l'Ordine selezionato
                 this.scatole_disponibili -= num_pacchi_usati;
                 this.cm_nastro_disponibili -= num_pacchi_usati * 50;
+
+                Log.writeLog("nuova giacenza: "
+                                + this.scatole_disponibili + " scatole e "
+                                + this.cm_nastro_disponibili + " cm nastro disponibili");
 
                 firstOrder.getAcquirente_ordine().risveglia();
             }
@@ -107,36 +119,45 @@ public class Magazzino {
     }//end gestisciOrdine
 
     // metodo privato funzionale per trovare l'ordine per fifo e prio
-    private Order selectFIFOOrder(){
+    private Order selectFIFOOrder(boolean onlyGet){
         Order best = null;
         // la precedenza deve essere sempre data all'atterraggio
         if(!this.prime_list.isEmpty())
-            best = getAndRemoveFirst(this.prime_list);
+            best = getAndRemoveFirst(this.prime_list,onlyGet);
         else if(!this.standard_list.isEmpty())
-            best = getAndRemoveFirst(this.standard_list);
+            best = getAndRemoveFirst(this.standard_list,onlyGet);
         return best;
     }//end selectFIFOOrder
 
     // metodo privato per trovare il miglior ordine
     // all'interno di una coda e rimuoverlo
-    private Order getAndRemoveFirst(List<Order> orderList){
+    private Order getAndRemoveFirst(List<Order> orderList,boolean onlyGet){
         Order best;
         best = orderList.get(0);
         // rimuovo il primo dalla coda
         if (!CanHandlePacchi(best))
             return null;
 
-        orderList.remove(best);
+        if (!onlyGet)
+            orderList.remove(best);
         return best;
     }//end getAndRemoveFirst
 
     //invocato dai fornitori
-    public void depositaRisorse(Fornitore_di_risorse fornitore_di_risorse,int cm_nastro,int nscatole){
+    public void depositaRisorse(Fornitore_di_risorse fornitore_di_risorse,int cm_nastro,int nscatole) throws InterruptedException {
         this.lck.lock();
 
         cm_nastro_disponibili += cm_nastro;
         scatole_disponibili += nscatole;
-        Log.writeLog(fornitore_di_risorse.getName() + " ha depositato " + nscatole + " scatole e " + cm_nastro + " cm di nastro. La giacenza ora -> Scatole " + scatole_disponibili + " nastro " + cm_nastro_disponibili);
+
+        Log.writeLog(fornitore_di_risorse.getName() + " ha depositato: "
+                        + nscatole + " scatole e "
+                        + cm_nastro + " cm di nastro. La giacenza ora -> Scatole "
+                        + scatole_disponibili + " nastro " + cm_nastro_disponibili);
+
+
+        // devo svegliare l'addetto se sta dormendo
+        this.nuoveRichieste.release();
 
         this.lck.unlock();
     }//end depositaRisorse
@@ -148,5 +169,23 @@ public class Magazzino {
         int num_pacchi_richiesti = ordine.getNum_pacchi_richiesti();
         return (cm_nastro_disponibili >= (num_pacchi_richiesti * 50)) & (scatole_disponibili >= num_pacchi_richiesti);
     }//end CanHandlePacchi
+
+    // metodo per la stampa del contenuto delle code
+    private void stampaListe(){
+        // stampo il conteunto delle due code
+        Log.writeLog("___________________________");
+        Log.writeLog("PRIME: ");
+        for(int i = 0; i < this.prime_list.size(); i++){
+            Order o = this.prime_list.get(i);
+            Log.writeLog("Ordine_" + o.getNumero_ordine().toString());
+        }
+        Log.writeLog("___________________________");
+        Log.writeLog("STANDARD: ");
+        for(int i = 0; i < this.standard_list.size(); i++){
+            Order o = this.standard_list.get(i);
+            Log.writeLog("Ordine_" + o.getNumero_ordine().toString());
+        }
+        Log.writeLog("___________________________");
+    }
 
 }

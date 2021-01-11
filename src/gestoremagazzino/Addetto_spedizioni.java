@@ -1,10 +1,8 @@
-package warehouse_mgt;
-
-import java.util.concurrent.locks.Condition;
+package gestoremagazzino;
 
 //implementa l'addetto alle spedizioni
 public class Addetto_spedizioni extends Thread{
-    private Magazzino myMagazzino;
+    private final Magazzino myMagazzino;
 
     public Addetto_spedizioni(int num_addetto,Magazzino mag)
     {
@@ -15,11 +13,13 @@ public class Addetto_spedizioni extends Thread{
     @Override
     public void run() {
         boolean isAlive = true;
+
+        Log.writeLog( super.getName() + " Incomincia a lavorare");
         while(isAlive){
             try{
                 this.myMagazzino.gestisciOrdine(this);
             }catch(InterruptedException e){
-                System.out.println("Interrupt: "+e);
+                //System.out.println("Interrupt: "+e);
                 isAlive = false;
             }
         }

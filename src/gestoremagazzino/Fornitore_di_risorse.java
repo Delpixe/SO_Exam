@@ -2,14 +2,14 @@
 Quando il fornitore deposita nuove risorse ne notifica la presenza a tutti gli addetti
 alle spedizioni che si dovessero trovare in attesa di risorse.
 */
-package warehouse_mgt;
+package gestoremagazzino;
 
 import java.util.Random;
 
 public class Fornitore_di_risorse extends Thread{
 
     private final int fTime;
-    private Magazzino myMagazzino;
+    private final Magazzino myMagazzino;
 
     public Fornitore_di_risorse(String name,int time_ms,Magazzino mag)
     {
@@ -36,9 +36,9 @@ public class Fornitore_di_risorse extends Thread{
                     this.myMagazzino.depositaRisorse(this,cm_nastro_rifornimento,nscatole_rifornimento);
 
                 if (this.fTime != 0)
-                    this.sleep(fTime);
+                    sleep(fTime);
             }catch(InterruptedException e){
-                Log.writeLog(e.toString());
+                //Log.writeLog(e.toString());
                 isAlive = false;
             }
         }

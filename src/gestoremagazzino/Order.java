@@ -1,4 +1,4 @@
-package warehouse_mgt;
+package gestoremagazzino;
 
 public class Order {
 
@@ -17,13 +17,7 @@ public class Order {
         return num_pacchi_richiesti;
     }
 
-    public String getNomeAcquirente() {
-        return(this.acquirente_ordine.getName());
-    }
-
     public Integer getNumero_ordine() { return this.numero_ordine; }
-
-    public Integer getOrderNos() { return orderNos; }
 
     public Acquirente getAcquirente_ordine() {
         return acquirente_ordine;
