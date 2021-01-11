@@ -1,6 +1,5 @@
 package gestoremagazzino;
 
-import java.lang.module.ModuleReader;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
@@ -82,24 +81,19 @@ public class Magazzino {
 
         this.lck.lock();
         try{
-            Order firstOrder = null;
-            while (firstOrder == null) {
+            Order firstOrder = selectFIFOOrder(true);
+            if (firstOrder != null){
+                Log.writeLog(addetto_spedizioni.getName() + " scruta la lista:");
+                this.stampaListe();
                 firstOrder = selectFIFOOrder(false);
 
-                if (firstOrder == null)
-                    this.magazzinoRifornito.acquire();
-            }
-
-            Log.writeLog(addetto_spedizioni.getName() + " scruta la lista:");
-            this.stampaListe();
-            Order firstOrder = selectFIFOOrder(false);
-            if (firstOrder != null){
                 int num_pacchi_usati = firstOrder.getNum_pacchi_richiesti();
                 Log.writeLog(addetto_spedizioni.getName() + " sta gestendo l'ordine: " +
                         firstOrder.getNumero_ordine() + " di tipo " +
                         firstOrder.getAcquirente_ordine().getTipoAcquirente() + " contente " +
                         num_pacchi_usati);
 
+                addetto_spedizioni.sleep(num_pacchi_usati * 5);
                 // sveglio l'Ordine selezionato
                 this.scatole_disponibili -= num_pacchi_usati;
                 this.cm_nastro_disponibili -= num_pacchi_usati * 50;
@@ -171,7 +165,7 @@ public class Magazzino {
     }//end CanHandlePacchi
 
     // metodo per la stampa del contenuto delle code
-    private void stampaListe(){
+    public void stampaListe(){
         // stampo il conteunto delle due code
         Log.writeLog("___________________________");
         Log.writeLog("PRIME: ");

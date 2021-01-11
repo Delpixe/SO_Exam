@@ -51,6 +51,7 @@ public class GestoreMagazzino {
             Log.writeLog(e.toString());
         }
 
+        magazzino.stampaListe();
         printFinalPageList();
     }
 

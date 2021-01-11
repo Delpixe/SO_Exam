@@ -24,7 +24,7 @@ public class Acquirente extends Thread{
         Random rnd = new Random();
 
         while (num_ordine < this.NUMORDINIDAEVADERE) {
-            int num_pacchi = rnd.nextInt(4)+1;
+            int num_pacchi = rnd.nextInt(3)+1;
             num_ordine++;
             RandomlySleep();
             this.myMagazzino.effettuaOrdine(this,num_pacchi);
@@ -37,8 +37,8 @@ public class Acquirente extends Thread{
         Random rnd = new Random();
         int random_Number = rnd.nextInt(10) + 1;
         String tipo = switch (random_Number) {
-            case 1, 2, 3 -> "PRIME";
-            default -> "STANDARD";
+            case 1, 2, 3 -> this.myMagazzino.PRIME;
+            default -> this.myMagazzino.STANDARD;
         };
 
         return tipo;
@@ -53,7 +53,7 @@ public class Acquirente extends Thread{
     //funzione per fare una sleep random
     private void RandomlySleep() {
         Random rnd = new Random();
-        int random_waitingSeconds = rnd.nextInt(5000);
+        int random_waitingSeconds = rnd.nextInt(50);
 
         try {
             Log.writeLog(super.getName() + " sta piazzando l'ordine, ci vorranno " + random_waitingSeconds + " millisecondi");

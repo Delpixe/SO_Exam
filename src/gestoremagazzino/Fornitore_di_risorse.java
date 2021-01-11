@@ -29,8 +29,8 @@ public class Fornitore_di_risorse extends Thread{
 
         while(isAlive){
             try{
-                nscatole_rifornimento = rnd.nextInt(10);
-                cm_nastro_rifornimento = nscatole_rifornimento * 50;
+                nscatole_rifornimento = rnd.nextInt(100);
+                cm_nastro_rifornimento = rnd.nextInt(5000);
 
                 if ((cm_nastro_rifornimento != 0) || (nscatole_rifornimento != 0))
                     this.myMagazzino.depositaRisorse(this,cm_nastro_rifornimento,nscatole_rifornimento);
