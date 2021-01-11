@@ -2,10 +2,10 @@ package gestoremagazzino;
 
 public class Order {
 
-    private int num_pacchi_richiesti;
-    private Acquirente acquirente_ordine;
+    private final int num_pacchi_richiesti;
+    private final Acquirente acquirente_ordine;
     private static Integer orderNos = 0;
-    private Integer numero_ordine;
+    private final Integer numero_ordine;
 
     public Order(Acquirente acquirente_ordine, int num_pacchi){
         this.acquirente_ordine = acquirente_ordine;

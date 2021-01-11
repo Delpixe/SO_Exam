@@ -36,12 +36,11 @@ public class Acquirente extends Thread{
     private String Randomly_IsPrime() {
         Random rnd = new Random();
         int random_Number = rnd.nextInt(10) + 1;
-        String tipo = switch (random_Number) {
-            case 1, 2, 3 -> this.myMagazzino.PRIME;
-            default -> this.myMagazzino.STANDARD;
-        };
 
-        return tipo;
+        return switch (random_Number) {
+            case 1, 2, 3 -> Magazzino.PRIME;
+            default -> Magazzino.STANDARD;
+        };
     }
 
     //Ritorna il tipoAcquirente
