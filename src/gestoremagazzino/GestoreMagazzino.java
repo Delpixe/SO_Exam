@@ -51,7 +51,14 @@ public class GestoreMagazzino {
             Log.writeLog(e.toString());
         }
 
+        Log.writeLog("Stampa della lista alla fine del programma");
+        System.out.println("Stampa della lista alla fine del programma");
         magazzino.stampaListe();
+
+        Log.writeLog("Stampa degli ordini con i tempi impiegati");
+        System.out.println("Stampa degli ordini con i tempi impiegati");
+        magazzino.printOrderTimeList();
+
         printFinalPageList();
     }
 

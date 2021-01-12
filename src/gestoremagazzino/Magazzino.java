@@ -17,6 +17,8 @@ public class Magazzino {
     //prime e standard
     private final ArrayList<Order> standard_list;
     private final ArrayList<Order> prime_list;
+    private final ArrayList<Order> prime_orderTime_list;
+    private final ArrayList<Order> standard_orderTime_list;
 
     // attributi di sincronizzazione lock per la mutua esclusione
     // a guardia di standard_list, prime_list
@@ -36,6 +38,8 @@ public class Magazzino {
     public Magazzino(){
         this.standard_list = new ArrayList<>();
         this.prime_list = new ArrayList<>();
+        this.prime_orderTime_list = new ArrayList<>();
+        this.standard_orderTime_list = new ArrayList<>();
 
         this.lckRisorse = new ReentrantLock(true);
         this.lck = new ReentrantLock(true);
@@ -89,6 +93,9 @@ public class Magazzino {
 
         this.lck.lock();
         try{
+            long tempoInizio = System.currentTimeMillis(),
+                    tempoFine;
+
             Log.writeLog(addetto_spedizioni.getName() + " scruta la lista:");
             this.stampaListe();
 
@@ -116,6 +123,14 @@ public class Magazzino {
                             + this.cm_nastro_disponibili + " cm nastro disponibili");
 
             firstOrder.getAcquirente_ordine().risveglia();
+
+            tempoFine = System.currentTimeMillis();
+            firstOrder.setTempo_impiegato(tempoFine - tempoInizio);
+            if (firstOrder.getAcquirente_ordine().getTipoAcquirente().equals(PRIME))
+                this.prime_orderTime_list.add(firstOrder);
+            else
+                this.standard_orderTime_list.add(firstOrder);
+
         }finally{
             this.lckRisorse.unlock();
             this.lck.unlock();
@@ -196,4 +211,76 @@ public class Magazzino {
         return System.currentTimeMillis() - this.tempoInizio;
     }
 
+    public void printOrderTimeList() {
+        Log.writeLog("___________Prime___________");
+        System.out.println("___________Prime___________");
+        List<Double> arrayList = new ArrayList<Double>();
+        for (int i = 0; i < this.prime_orderTime_list.size(); i++) {
+            Order o = this.prime_orderTime_list.get(i);
+            stampaTempoPacco(arrayList, i, o);
+        }
+        double deviazioneStandard = 0,
+                media = 0;
+
+        double[] array = new double[arrayList.size()];
+        if (this.prime_orderTime_list.size() != 0) {
+            for(int i = 0; i < arrayList.size(); i++)
+                array[i] = arrayList.get(i);
+
+            deviazioneStandard = Utility.calcolaDeviazioneStandard(array);
+            media = Utility.calcolaMedia(array);
+        }
+
+        System.out.println("__________________________");
+        String final_message = "I prime sono " + array.length
+                + " la deviazione standard dei prime è "+ deviazioneStandard
+                + " la media dei prime è "+ media;
+        System.out.println(final_message);
+        Log.writeLog(final_message);
+        Log.writeLog("__________________________");
+
+        System.out.println("_________end-Prime_________");
+        Log.writeLog("_________end-Prime_________");
+
+        Log.writeLog("________Standard________");
+        System.out.println("________Standard________");
+        List<Double> arrayList_std = new ArrayList<Double>();
+        for (int i = 0; i < this.standard_orderTime_list.size(); i++) {
+            Order o = this.standard_orderTime_list.get(i);
+            stampaTempoPacco(arrayList_std, i, o);
+        }
+
+        deviazioneStandard = 0;
+        media = 0;
+        double[] array_std = new double[arrayList_std.size()];
+
+        if (this.standard_orderTime_list.size() != 0){
+            for(int i = 0; i < arrayList_std.size(); i++)
+                array_std[i] = arrayList_std.get(i);
+
+            deviazioneStandard = Utility.calcolaDeviazioneStandard(array_std);
+            media = Utility.calcolaMedia(array_std);
+        }
+
+        System.out.println("__________________________");
+        final_message = "Gli standard sono " + array_std.length
+                + " la deviazione standard degli standard è "+ deviazioneStandard
+                + " la media degli standard è "+ media;
+
+        System.out.println(final_message);
+        Log.writeLog(final_message);
+        Log.writeLog("__________________________");
+
+        System.out.println("______end-Standard______");
+        Log.writeLog("______end-Standard______");
+    }
+
+    private void stampaTempoPacco(List<Double> array, int i, Order o) {
+        for (int j = 0;j<o.getNum_pacchi_richiesti();j++){
+            String message = "Ordine_"+o.getNumero_ordine() + " pacco_" + j + " " +o.getTempo_impiegato()/o.getNum_pacchi_richiesti()+" millisecondi";
+            System.out.println(message);
+            Log.writeLog(message);
+            array.add((double) (o.getTempo_impiegato()/o.getNum_pacchi_richiesti()));
+        }
+    }
 }

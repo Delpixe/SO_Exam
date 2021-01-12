@@ -46,6 +46,28 @@ public class Utility {
         return lineReaded;
     }//end-ReadLine
 
+    public static double calcolaDeviazioneStandard(double arrayTempi[])
+    {
+        double DeviazioneStandard = 0.0;
+        int length = arrayTempi.length;
+
+        double mean = calcolaMedia(arrayTempi);
+
+        for(double numero: arrayTempi)
+            DeviazioneStandard += Math.pow(numero - mean, 2);
+
+        return Math.sqrt(DeviazioneStandard/length);
+    }
+
+    public static double calcolaMedia(double[] array) {
+        double somma = 0.0;
+        int length = array.length;
+
+        for(double numero : array)
+            somma += numero;
+
+        return somma/length;
+    }
     /*
     public static int catchToLaunch(){
         int value = 0;

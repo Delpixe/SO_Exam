@@ -6,6 +6,7 @@ public class Order {
     private final Acquirente acquirente_ordine;
     private static Integer orderNos = 0;
     private final Integer numero_ordine;
+    private long tempo_impiegato = 0;
 
     public Order(Acquirente acquirente_ordine, int num_pacchi){
         this.acquirente_ordine = acquirente_ordine;
@@ -21,5 +22,12 @@ public class Order {
 
     public Acquirente getAcquirente_ordine() {
         return acquirente_ordine;
+    }
+
+    public long getTempo_impiegato(){
+        return this.tempo_impiegato;
+    }
+    public void setTempo_impiegato(long tempo){
+        this.tempo_impiegato = tempo;
     }
 }
