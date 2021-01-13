@@ -11,8 +11,6 @@ public class Magazzino {
     public static final String PRIME    = "PRIME";
     public static final String STANDARD = "STANDARD";
 
-    private final long tempoInizio = System.currentTimeMillis();
-
     //strutture per emulare le liste degli ordini
     //prime e standard
     private final ArrayList<Order> standard_list;
@@ -22,11 +20,11 @@ public class Magazzino {
 
     // attributi di sincronizzazione lock per la mutua esclusione
     // a guardia di standard_list, prime_list
-    private final ReentrantLock lck;
+    private final ReentrantLock lckAccesso;
     private final ReentrantLock lckRisorse;
     private final Condition attesaRisorse;
 
-    // semaforo contatore per sospendere il Controllore
+    // semaforo contatore per sospendere l'addetto
     // in attesa di nuove richieste
     private final Semaphore nuoveRichieste;
 
@@ -42,7 +40,7 @@ public class Magazzino {
         this.standard_orderTime_list = new ArrayList<>();
 
         this.lckRisorse = new ReentrantLock(true);
-        this.lck = new ReentrantLock(true);
+        this.lckAccesso = new ReentrantLock(true);
         this.nuoveRichieste = new Semaphore(0,true);
         this.attesaRisorse = this.lckRisorse.newCondition();
 
@@ -58,7 +56,7 @@ public class Magazzino {
 
     //invocato dagli acquirenti
     public void effettuaOrdine(Acquirente acquirente_ordine,int num_pacchi){
-        this.lck.lock();
+        this.lckAccesso.lock();
         try{
             Order ordine = new Order(acquirente_ordine,num_pacchi);
             if (acquirente_ordine.getTipoAcquirente().equals(PRIME))
@@ -66,20 +64,19 @@ public class Magazzino {
             else
                 standard_list.add(ordine);
 
-            Log.writeLog("(" + this.getTempoTrascorso() + ") --> "
-                                + acquirente_ordine.getName() + " ha messo in coda l'ordine <"
+            Log.writeLog(acquirente_ordine.getName() + " ha messo in coda l'ordine <"
                                 + ordine.getNumero_ordine() +"> contenente "
                                 + num_pacchi + " pacchi");
 
             // devo svegliare l'addetto se sta dormendo
             this.nuoveRichieste.release();
             // sospendo l'acquirente con il metodo interno
-            acquirente_ordine.setCondition(this.lck.newCondition());
+            acquirente_ordine.setCondition(this.lckAccesso.newCondition());
             acquirente_ordine.sospendi();
         }catch(InterruptedException e){
             Log.writeLog(e.toString());
         }finally{
-            this.lck.unlock();
+            this.lckAccesso.unlock();
             //FINE SEZIONE CRITICA
         }
     }//end effettuaOrdine
@@ -91,13 +88,13 @@ public class Magazzino {
         // ora so che c'è almeno una richiesta in attesa di essere servita
         // posso finalmente gesitere una richiesta devo cercare l'Ordine migliore nelle mie code
 
-        this.lck.lock();
+        this.lckAccesso.lock();
         try{
             long tempoInizio = System.currentTimeMillis(),
                     tempoFine;
 
             Log.writeLog(addetto_spedizioni.getName() + " scruta la lista:");
-            this.stampaListe();
+            this.stampaCode();
 
             Order firstOrder = selectFIFOOrder();
 
@@ -113,7 +110,7 @@ public class Magazzino {
             this.scatole_disponibili -= num_pacchi_usati;
             this.cm_nastro_disponibili -= num_pacchi_usati * 50;
 
-            Log.writeLog("(" + this.getTempoTrascorso() + ") --> " +addetto_spedizioni.getName() + " ha gestito l'ordine: " +
+            Log.writeLog(addetto_spedizioni.getName() + " ha gestito l'ordine: " +
                     firstOrder.getNumero_ordine() + " di tipo " +
                     firstOrder.getAcquirente_ordine().getTipoAcquirente() + " contente " +
                     num_pacchi_usati);
@@ -133,7 +130,7 @@ public class Magazzino {
 
         }finally{
             this.lckRisorse.unlock();
-            this.lck.unlock();
+            this.lckAccesso.unlock();
             //FINE SEZIONE CRITICA
         }
 
@@ -171,7 +168,7 @@ public class Magazzino {
             // devo svegliare gli addetti se stanno in wait
             this.attesaRisorse.signalAll();
 
-            Log.writeLog("(" + this.getTempoTrascorso() + ") --> "+fornitore_di_risorse.getName() + " ha depositato: "
+            Log.writeLog(fornitore_di_risorse.getName() + " ha depositato: "
                         + nscatole + " scatole e "
                         + cm_nastro + " cm di nastro. La giacenza ora -> Scatole "
                         + scatole_disponibili + " nastro " + cm_nastro_disponibili);
@@ -180,7 +177,6 @@ public class Magazzino {
         }
         //FINE sezione critica
     }//end depositaRisorse
-
     //fine - lck and sem mgt
 
     //funzioni extra
@@ -190,40 +186,50 @@ public class Magazzino {
     }//end CanHandlePacchi
 
     // metodo per la stampa del contenuto delle code
-    public void stampaListe(){
+    public void stampaCode(){
         // stampo il conteunto delle due code
-        Log.writeLog("___________________________");
-        Log.writeLog("PRIME: ");
-        for(int i = 0; i < this.prime_list.size(); i++){
-            Order o = this.prime_list.get(i);
-            Log.writeLog("Ordine_" + o.getNumero_ordine().toString());
-        }
-        Log.writeLog("___________________________");
-        Log.writeLog("STANDARD: ");
-        for(int i = 0; i < this.standard_list.size(); i++){
-            Order o = this.standard_list.get(i);
-            Log.writeLog("Ordine_" + o.getNumero_ordine().toString());
-        }
-        Log.writeLog("___________________________");
-    }
+        StampaLista(this.prime_list,this.PRIME);
+        StampaLista(this.standard_list,this.STANDARD);
+    }//end-stampaCode
 
-    private long getTempoTrascorso() {
-        return System.currentTimeMillis() - this.tempoInizio;
-    }
+    private void StampaLista( ArrayList<Order> list,String tipoLista){
+        Log.writeLog("___________________________");
+        Log.writeLog(tipoLista +" : ");
 
-    public void printOrderTimeList() {
-        Log.writeLog("___________Prime___________");
-        System.out.println("___________Prime___________");
-        List<Double> arrayList = new ArrayList<Double>();
-        for (int i = 0; i < this.prime_orderTime_list.size(); i++) {
-            Order o = this.prime_orderTime_list.get(i);
-            stampaTempoPacco(arrayList, i, o);
+        System.out.println("___________________________");
+        System.out.println(tipoLista +" : ");
+
+        for(int i = 0; i < list.size(); i++){
+            Order o = list.get(i);
+            Log.writeLog("Ordine_" + o.getNumero_ordine().toString());
+            System.out.println("Ordine_" + o.getNumero_ordine().toString());
         }
+
+        Log.writeLog("___________________________");
+        System.out.println("___________________________");
+
+    }//end-StampaLista
+
+    public void stampaListeTempi() {
+        StampaListaTempi(this.prime_orderTime_list,this.PRIME);
+        StampaListaTempi(this.standard_orderTime_list,this.STANDARD);
+    }//end-StampaListeTempi
+
+    private void StampaListaTempi( ArrayList<Order> list,String tipoLista) {
+        Log.writeLog("___________"+tipoLista+"___________");
+        System.out.println("___________"+tipoLista+"___________");
+
+        List<Double> arrayList = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            Order o = list.get(i);
+            stampaTempoPacco(arrayList, o);
+        }
+
         double deviazioneStandard = 0,
                 media = 0;
 
         double[] array = new double[arrayList.size()];
-        if (this.prime_orderTime_list.size() != 0) {
+        if (list.size() != 0) {
             for(int i = 0; i < arrayList.size(); i++)
                 array[i] = arrayList.get(i);
 
@@ -232,55 +238,24 @@ public class Magazzino {
         }
 
         System.out.println("__________________________");
-        String final_message = "I prime sono " + array.length
-                + " la deviazione standard dei prime è "+ deviazioneStandard
-                + " la media dei prime è "+ media;
-        System.out.println(final_message);
-        Log.writeLog(final_message);
-        Log.writeLog("__________________________");
-
-        System.out.println("_________end-Prime_________");
-        Log.writeLog("_________end-Prime_________");
-
-        Log.writeLog("________Standard________");
-        System.out.println("________Standard________");
-        List<Double> arrayList_std = new ArrayList<Double>();
-        for (int i = 0; i < this.standard_orderTime_list.size(); i++) {
-            Order o = this.standard_orderTime_list.get(i);
-            stampaTempoPacco(arrayList_std, i, o);
-        }
-
-        deviazioneStandard = 0;
-        media = 0;
-        double[] array_std = new double[arrayList_std.size()];
-
-        if (this.standard_orderTime_list.size() != 0){
-            for(int i = 0; i < arrayList_std.size(); i++)
-                array_std[i] = arrayList_std.get(i);
-
-            deviazioneStandard = Utility.calcolaDeviazioneStandard(array_std);
-            media = Utility.calcolaMedia(array_std);
-        }
-
-        System.out.println("__________________________");
-        final_message = "Gli standard sono " + array_std.length
-                + " la deviazione standard degli standard è "+ deviazioneStandard
-                + " la media degli standard è "+ media;
+        String final_message = "I "+tipoLista+" sono " + array.length
+                + " la deviazione standard dei "+tipoLista+" prime è "+ deviazioneStandard
+                + " la media dei "+tipoLista+" è "+ media;
 
         System.out.println(final_message);
         Log.writeLog(final_message);
         Log.writeLog("__________________________");
 
-        System.out.println("______end-Standard______");
-        Log.writeLog("______end-Standard______");
-    }
+        System.out.println("_________end-"+tipoLista+"_________");
+        Log.writeLog("_________end-"+tipoLista+"_________");
+    }//end-StampaListaTempi
 
-    private void stampaTempoPacco(List<Double> array, int i, Order o) {
+    private void stampaTempoPacco(List<Double> array, Order o) {
         for (int j = 0;j<o.getNum_pacchi_richiesti();j++){
             String message = "Ordine_"+o.getNumero_ordine() + " pacco_" + j + " " +o.getTempo_impiegato()/o.getNum_pacchi_richiesti()+" millisecondi";
             System.out.println(message);
             Log.writeLog(message);
             array.add((double) (o.getTempo_impiegato()/o.getNum_pacchi_richiesti()));
         }
-    }
+    }//end-stampaTempoPacco
 }

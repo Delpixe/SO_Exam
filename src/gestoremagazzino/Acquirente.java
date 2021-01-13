@@ -6,7 +6,7 @@ import java.util.concurrent.locks.Condition;
 public class Acquirente extends Thread{
     private final String tipoAcquirente;
     private final int NUMORDINIDAEVADERE = 10;
-    private Condition myCondition;
+    private Condition waitCondition;
     private final Magazzino myMagazzino;
 
     public Acquirente(int num_Acquirente,Magazzino mag){
@@ -64,13 +64,13 @@ public class Acquirente extends Thread{
 
     //gestisco la condition di risveglio dell'acquirente
     public void setCondition(Condition c){
-        this.myCondition = c;
+        this.waitCondition = c;
     }
     public void sospendi() throws InterruptedException{
-        this.myCondition.await();
+        this.waitCondition.await();
     }
     public void risveglia() {
-        this.myCondition.signal();
+        this.waitCondition.signal();
     }
 
 }

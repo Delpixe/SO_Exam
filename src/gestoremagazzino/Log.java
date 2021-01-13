@@ -52,7 +52,6 @@ public class Log {
                 SimpleDateFormat format = new SimpleDateFormat("yyyy_MM_dd");
                 File f1 = new File(path +"/log_" + format.format(Calendar.getInstance().getTime()) + ".log");
 
-
                 if (!f1.exists()){
                     boolean file_created = false;
                     while(!file_created) {
@@ -75,8 +74,9 @@ public class Log {
 
             } catch(IOException e){
                 e.printStackTrace();
+            }finally {
+                write_log_lck.unlock();
             }
-            write_log_lck.unlock();
             write_log_sem.release();
         }
     } //end-writeLog

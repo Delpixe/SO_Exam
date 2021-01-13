@@ -1,7 +1,5 @@
 package gestoremagazzino;
 
-import java.util.Random;
-
 public class GestoreMagazzino {
 
     public static void main(String[] args) {
@@ -10,10 +8,14 @@ public class GestoreMagazzino {
         if (Log.wannaWriteLog())
             Log.insertPath();
 
-        Random rnd = new Random();
-        int nAddetti = rnd.nextInt(100);
-        int nAcquirenti = rnd.nextInt(100);
-        int fTime = Math.abs(rnd.nextInt(3000)+ 2000); //messi almeno 2 secondi per semplicità di testing
+        System.out.println("inserire il numero di addetti: ");
+        int nAddetti = Utility.catchToLaunch();
+
+        System.out.println("inserire il numero di acquirenti: ");
+        int nAcquirenti = Utility.catchToLaunch();
+
+        System.out.println("inserire il tempo di ricarica del fornitore (in millisecondi): ");
+        int fTime = Utility.catchToLaunch();
 
         Magazzino magazzino = new Magazzino();
         Fornitore_di_risorse fornitore = new Fornitore_di_risorse("Adesivo_World",fTime,magazzino);
@@ -53,11 +55,11 @@ public class GestoreMagazzino {
 
         Log.writeLog("Stampa della lista alla fine del programma");
         System.out.println("Stampa della lista alla fine del programma");
-        magazzino.stampaListe();
+        magazzino.stampaCode();
 
         Log.writeLog("Stampa degli ordini con i tempi impiegati");
         System.out.println("Stampa degli ordini con i tempi impiegati");
-        magazzino.printOrderTimeList();
+        magazzino.stampaListeTempi();
 
         printFinalPageList();
     }
@@ -89,7 +91,7 @@ public class GestoreMagazzino {
         Log.writeLog("________________________________________________________");
         Log.writeLog("Simulazione terminata.");
         Log.writeLog("________________________________________________________");
-       // waitForEnter();
+        waitForEnter();
 
     } //end-printFinalPageList
 

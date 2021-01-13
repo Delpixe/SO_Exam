@@ -46,7 +46,7 @@ public class Utility {
         return lineReaded;
     }//end-ReadLine
 
-    public static double calcolaDeviazioneStandard(double arrayTempi[])
+    public static double calcolaDeviazioneStandard(double[] arrayTempi)
     {
         double DeviazioneStandard = 0.0;
         int length = arrayTempi.length;
@@ -68,16 +68,16 @@ public class Utility {
 
         return somma/length;
     }
-    /*
+
     public static int catchToLaunch(){
         int value = 0;
         while (value <= 0){
-            System.out.println("Inserisci quanto devo lanciare : ");
+            System.out.print("Inserire valore : ");
             value = askInt();
             if (value <= 0)
                 System.out.println("Errore nell'inserimento, riprova!");
         }
         return value;
     }//end-catchToLaunch
-     */
+
 }
